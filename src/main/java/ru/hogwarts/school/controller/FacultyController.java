@@ -4,7 +4,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.hogwarts.school.model.Faculty;
+import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.service.FacultyService;
+
 import java.util.Collection;
 
 @RestController
@@ -45,5 +47,15 @@ public class FacultyController {
     @GetMapping("/filter")
     public ResponseEntity<Collection<Faculty>> filterByColor(@RequestParam String color) {
         return ResponseEntity.ok(facultyService.filterByColor(color));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Collection<Faculty>> searchByNameOrColor(@RequestParam String query) {
+        return ResponseEntity.ok(facultyService.findByNameOrColor(query));
+    }
+
+    @GetMapping("/{id}/students")
+    public ResponseEntity<Collection<Student>> getStudentsOfFaculty(@PathVariable Long id) {
+        return ResponseEntity.ok(facultyService.findStudentsOfFaculty(id));
     }
 }
