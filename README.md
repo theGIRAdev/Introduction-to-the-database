@@ -16,15 +16,19 @@ scripts.sql                     — SQL-запросы к таблице student
 src/main/java/ru/hogwarts/school
 ├── HogwartsSchoolApplication.java
 ├── controller
+│   ├── AvatarTController.java
 │   ├── FacultyController.java
 │   └── StudentController.java
 ├── model
+│   ├── Avatar.java
 │   ├── Faculty.java
 │   └── Student.java
 ├── repository
+│   ├── AvatarRepository.java
 │   ├── FacultyRepository.java
 │   └── StudentRepository.java
 └── service
+    ├── AvatarService.java
     ├── FacultyService.java
     └── StudentService.java
 ```
@@ -37,6 +41,8 @@ src/main/java/ru/hogwarts/school
 - `Faculty.students` — `@OneToMany(mappedBy = "faculty")`, обратная сторона, помечена `@JsonIgnore`, чтобы не возникало циклической сериализации в JSON.
 
 Идентификатор — `@Id` + `@GeneratedValue(strategy = IDENTITY)`.
+
+`Avatar` — отдельная сущность с полями `id` и `filePath`; используется для демонстрации постраничной выдачи.
 
 ## Подготовка базы данных
 
@@ -84,6 +90,9 @@ spring.jpa.hibernate.ddl-auto=update
 | GET | `/student/filter?age=11` | — | `200` + список студентов с этим возрастом |
 | GET | `/student?min=10&max=20` | — | `200` + студенты с возрастом в диапазоне (включительно) |
 | GET | `/student/{id}/faculty` | — | `200` + факультет студента, либо `404` |
+| GET | `/student/count` | — | `200` + количество всех студентов (число) |
+| GET | `/student/average-age` | — | `200` + средний возраст студентов; `0.0`, если студентов нет |
+| GET | `/student/last-five` | — | `200` + пять студентов с наибольшими `id` |
 
 ### Факультеты — `/faculty`
 
@@ -97,7 +106,27 @@ spring.jpa.hibernate.ddl-auto=update
 | GET | `/faculty/search?query=gryf` | — | `200` + поиск по имени **или** цвету, без учёта регистра |
 | GET | `/faculty/{id}/students` | — | `200` + список студентов факультета |
 
-### Особенности
+### Аватарки — `/avatar`
+
+| Метод | Путь | Тело запроса | Ответ |
+|---|---|---|---|
+| GET | `/avatar?page=0&size=5` | — | `200` + страница аватарок |
+
+Параметры пагинации передаются через `@RequestParam`:
+
+- `page` — номер страницы, нумерация **с нуля**;
+- `size` — количество аватарок на странице.
+
+Ответ сериализуется как объект `Page`: `content`, `totalElements`, `totalPages`, `number`, `size` и т. д.
+
+## SQL-запросы из Java (`@Query`)
+
+- `StudentRepository.countAllStudents()` — `@Query(value = "SELECT COUNT(*) FROM student", nativeQuery = true)`, возвращает `Long` — количество всех студентов;
+- `StudentRepository.findAverageAge()` — `@Query("SELECT AVG(s.age) FROM Student s")`, возвращает `Double` (`null`, если студентов нет; сервис подставляет `0.0`);
+- `StudentRepository.findLastFiveStudents()` — `@Query(value = "SELECT * FROM student ORDER BY id DESC LIMIT 5", nativeQuery = true)`, возвращает `List<Student>` — пять студентов с наибольшими `id`;
+- `AvatarRepository.findAll(Pageable pageable)` — возвращает `Page<Avatar>` и используется для постраничной выдачи.
+
+## Особенности
 
 - В `PUT` идентификатор обязателен в теле запроса; при несуществующем `id` возвращается `200` с пустым телом.
 - `POST` игнорирует переданный `id` и всегда создаёт новую запись.
