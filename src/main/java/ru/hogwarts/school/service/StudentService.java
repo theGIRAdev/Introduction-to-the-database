@@ -7,6 +7,7 @@ import ru.hogwarts.school.model.Student;
 import ru.hogwarts.school.repository.StudentRepository;
 
 import java.util.Collection;
+import java.util.List;
 
 @Service
 public class StudentService {
@@ -50,5 +51,18 @@ public class StudentService {
         return studentRepository.findById(studentId)
                 .map(Student::getFaculty)
                 .orElse(null);
+    }
+
+    public Long countAllStudents() {
+        return studentRepository.countAllStudents();
+    }
+
+    public Double findAverageAge() {
+        Double averageAge = studentRepository.findAverageAge();
+        return averageAge == null ? 0.0 : averageAge;
+    }
+
+    public List<Student> findLastFiveStudents() {
+        return studentRepository.findLastFiveStudents();
     }
 }

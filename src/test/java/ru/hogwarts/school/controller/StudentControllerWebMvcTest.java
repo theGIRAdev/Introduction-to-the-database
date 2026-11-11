@@ -126,4 +126,42 @@ class StudentControllerWebMvcTest {
                 .andExpect(jsonPath("$.name").value("Gryffindor"));
     }
 
+    @Test
+    void shouldReturnStudentsCount() throws Exception {
+        when(studentService.countAllStudents()).thenReturn(5L);
+
+        mockMvc.perform(get("/student/count"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value(5));
+    }
+
+    @Test
+    void shouldReturnAverageAge() throws Exception {
+        when(studentService.findAverageAge()).thenReturn(13.5);
+
+        mockMvc.perform(get("/student/average-age"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value(13.5));
+    }
+
+    @Test
+    void shouldReturnZeroAverageAgeWhenNoStudents() throws Exception {
+        when(studentService.findAverageAge()).thenReturn(0.0);
+
+        mockMvc.perform(get("/student/average-age"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").value(0.0));
+    }
+
+    @Test
+    void shouldReturnLastFiveStudents() throws Exception {
+        when(studentService.findLastFiveStudents())
+                .thenReturn(List.of(new Student(10L, "Newest", 12), new Student(9L, "Older", 13)));
+
+        mockMvc.perform(get("/student/last-five"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(10));
+    }
+
 }
